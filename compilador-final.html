@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>IDE Compilador Inteligente</title>
+<link rel="stylesheet" href="prism.css">
+<script src="prism.js"></script>
+
+<style>
+:root {
+  --bg: #1e1e1e;
+  --border: #91C0FD;
+  --font: 'Inconsolata', monospace;
+}
+body { background: #000; color: #fff; font-family: var(--font); padding: 20px; }
+
+/* CONTENEDOR TIPO VS CODE */
+.editor-wrapper {
+  position: relative;
+  width: 100%;
+  height: 450px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 5px;
+}
+
+#editing, #highlighting {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  padding: 15px; margin: 0; font-family: var(--font); font-size: 18px;
+  line-height: 1.5; tab-size: 4; overflow: auto; white-space: pre;
+  border: none; outline: none;
+}
+
+#editing {
+  z-index: 1; background: transparent; color: transparent; /* TEXTO INVISIBLE */
+  caret-color: #fff; resize: none;
+}
+
+#highlighting { z-index: 0; pointer-events: none; }
+
+/* COLORES FORZADOS (!important es clave aquí) */
+.token.keyword { color: #569cd6 !important; font-weight: bold; } /* int, if */
+.token.function { color: #dcdcaa !important; }                 /* print */
+.token.string { color: #ce9178 !important; }                   /* "texto" */
+.token.number { color: #b5cea8 !important; }                   /* 123 */
+.token.operator { color: #d4d4d4 !important; }
+.token.comment { color: #6a9955 !important; font-style: italic; }
+</style>
+</head>
+<body>
+
+    <h2 style="color:var(--border); margin-bottom:10px;">Buffer de Entrada</h2>
+    <div class="editor-wrapper">
+        <pre id="highlighting" aria-hidden="true"><code class="language-custom" id="highlighting-content"></code></pre>
+        <textarea id="editing" spellcheck="false" oninput="update(this.value); sync_scroll(this);" onscroll="sync_scroll(this);"></textarea>
+    </div>
+
+<script>
+// CONFIGURACIÓN DE INTELIGENCIA (TOKENS)
+Prism.languages['custom'] = {
+    'comment': /\/\/.*|\/\*[\s\S]*?\*\//,
+    'string': {
+        pattern: /"(?:\\.|[^\\"])*"/,
+        greedy: true
+    },
+    'function': /\b(print|input)\b(?=\s*\()/,
+    'keyword': /\b(int|float|char|string|if|else|while|for|return|void)\b/,
+    'number': /\b\d+(\.\d+)?\b/,
+    'operator': /[+\-*\/=<>!&|]+/,
+    'punctuation': /[{}()\[\];,.]/
+};
+
+function update(text) {
+    let result_element = document.querySelector("#highlighting-content");
+    
+    // Escapar caracteres para que no rompan el DOM
+    let content = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    
+    if (content[content.length - 1] === "\n") content += " ";
+    
+    result_element.innerHTML = content;
+    
+    // Aplicar el lenguaje 'custom'
+    Prism.highlightElement(result_element);
+}
+
+function sync_scroll(el) {
+    let res = document.querySelector("#highlighting");
+    res.scrollTop = el.scrollTop;
+    res.scrollLeft = el.scrollLeft;
+}
+
+// Cargar ejemplo al inicio
+window.onload = () => {
+    const code = 'int x = 10;\nprint("Hola Mundo");';
+    document.getElementById('editing').value = code;
+    update(code);
+};
+</script>
+</body>
+</html>

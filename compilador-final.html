@@ -788,6 +788,7 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
         </div>
       </div>
       <div class="editor-footer">
+        <span id="cursorInfo2" style="font-family:var(--font);font-size:10px;color:var(--text-sub);">L1:C1</span>
         <div class="zoom-controls">
           <span class="zoom-lbl">ZOOM -</span>
           <span class="zoom-val" id="zoomCode2Val">100%</span>
@@ -2273,6 +2274,8 @@ function loadLogo(input){
 /* ════════ CURSOR ════════ */
 document.getElementById('codeInput').addEventListener('keyup',updateCursor);
 document.getElementById('codeInput').addEventListener('click',updateCursor);
+document.getElementById('codeInput2').addEventListener('keyup',updateCursor2);
+document.getElementById('codeInput2').addEventListener('click',updateCursor2);
 /* ── updateCursor(): actualiza el indicador de posición del cursor ──
    Calcula la línea y columna según la posición de selección del textarea.
    Muestra "L{n}:C{n}" en el pie del editor (ej. "L3:C12"). */
@@ -2280,6 +2283,11 @@ function updateCursor(){
   const ta=document.getElementById('codeInput');
   const v=ta.value.substring(0,ta.selectionStart).split('\n');
   document.getElementById('cursorInfo').textContent=`L${v.length}:C${v[v.length-1].length+1}`;
+}
+function updateCursor2(){
+  const ta=document.getElementById('codeInput2');
+  const v=ta.value.substring(0,ta.selectionStart).split('\n');
+  document.getElementById('cursorInfo2').textContent=`L${v.length}:C${v[v.length-1].length+1}`;
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -2457,7 +2465,7 @@ function syncHighlightScroll2(){
 /* INIT */
 initPieCanvas();
 tryLoadLogoPath();
-updateLineNums();drawPie();setStatus('idle','Listo — Ctrl+Enter para compilar');
+updateLineNums();updateLineNums2();drawPie();setStatus('idle','Listo — Ctrl+Enter para compilar');
 updateHighlight();
 </script>
 </body>

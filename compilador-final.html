@@ -1740,6 +1740,21 @@ document.getElementById('codeInput2').addEventListener('scroll',()=>{
   syncHighlightScroll2();
 });
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();compile();}});
+
+/* ── TAB en el editor: inserta 4 espacios en vez de cambiar el foco ── */
+function handleTab(e){
+  if(e.key!=='Tab')return;
+  e.preventDefault();
+  const ta=e.target;
+  const start=ta.selectionStart;
+  const end=ta.selectionEnd;
+  ta.value=ta.value.substring(0,start)+'    '+ta.value.substring(end);
+  ta.selectionStart=ta.selectionEnd=start+4;
+  ta.dispatchEvent(new Event('input'));
+}
+document.getElementById('codeInput').addEventListener('keydown',handleTab);
+document.getElementById('codeInput2').addEventListener('keydown',handleTab);
+
 document.getElementById('tokScroll').addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();e.deltaY<0?zI('t'):zO('t');}},{passive:false});
 document.getElementById('astScroll').addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();e.deltaY<0?zI('a'):zO('a');}},{passive:false});
 

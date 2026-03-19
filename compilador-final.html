@@ -348,8 +348,16 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
   color:#fff;pointer-events:none;z-index:9999;display:none;line-height:1.6;
 }
 </style>
+
+<!-- =====================================================================
+     ESTILOS CSS — todo el diseño visual del compilador
+     ===================================================================== -->
 </head>
 <body>
+
+<!-- =====================================================================
+     CUERPO DE LA PAGINA
+     ===================================================================== -->
 
 <div id="pieTooltip"></div>
 
@@ -622,7 +630,14 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
 </div>
 
 <script>
+
+/* =====================================================================
+   JAVASCRIPT — toda la logica del compilador
+   ===================================================================== */
 /* ════════ KEYWORDS ════════ */
+/* ── PALABRAS CLAVE (KW)
+   Set con todas las palabras reservadas que el lexer reconoce.
+   Cubre Python, JS, C/C++, Java y otros lenguajes comunes. ── */
 const KW=new Set(['if','else','elif','for','while','do','switch','case','break','continue','return',
   'int','float','double','char','bool','void','string','var','let','const','def','class','struct',
   'enum','interface','extends','implements','import','from','as','new','delete','this','super',
@@ -635,6 +650,10 @@ const KW=new Set(['if','else','elif','for','while','do','switch','case','break',
 /* Type metadata */
 const TNAME={keyword:'Palabra clave',identifier:'Identificador',number:'Número',
   string:'Cadena',operator:'Operador',symbol:'Separador',comment:'Comentario',unknown:'No identificado'};
+/* ── CLASIFICACION DE TOKENS
+   Estas funciones reciben un token y devuelven texto descriptivo
+   para mostrar en las columnas 'Clasificacion' y 'Sub-clasificacion'
+   de la tabla de tokens. ── */
 
 function getClasif(tk){
   if(tk.t==='identifier') return 'Identificador de usuario';
@@ -724,6 +743,13 @@ const BADGE_STYLE={
 const DOT_COLORS=['#FF6B6B','#4ECDC4','#FFE66D','#A8E6CF','#C3A6FF','#FF8B94','#85C1E9','#F39C12'];
 
 /* ════════ LEXER ════════ */
+/* ═══════════════════════════════════════════════════════════
+   ANALIZADOR LEXICO — lex(src)
+   Recorre el codigo fuente caracter a caracter y produce una
+   lista de tokens: { t: tipo, v: valor, ln: linea, col: columna }
+   Tipos reconocidos: keyword, identifier, number, string,
+                      operator, symbol, comment, unknown
+   ═══════════════════════════════════════════════════════════ */
 function lex(src){
   const toks=[];let i=0,ln=1,col=1;
   const adv=()=>{if(src[i]==='\n'){ln++;col=1;}else col++;i++;};
@@ -752,6 +778,12 @@ function lex(src){
 }
 
 /* ════════ PARSER — etiquetas reales como en la imagen ════════ */
+/* ═══════════════════════════════════════════════════════════
+   ANALIZADOR SINTACTICO — parse(tokens)
+   Parser recursivo descendente que construye el Arbol de Sintaxis
+   Abstracta (AST). Cada funcion parse* maneja una regla gramatical.
+   Devuelve: { ast, log, nodeCount, errorCount }
+   ═══════════════════════════════════════════════════════════ */
 function parse(tokens){
   const toks=tokens.filter(t=>t.t!=='comment');
   let pos=0;const log=[];let nc=0,ec=0;
@@ -1123,6 +1155,12 @@ const AST_V_GAP=52;   // vertical gap between levels
 const AST_H_GAP=16;   // minimum horizontal gap between siblings
 
 /* ── LAYOUT ── */
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT DEL ARBOL SINTACTICO
+   astLayout(n)     → calcula el ancho _w de cada nodo recursivamente
+   astAssignPos(n)  → asigna coordenadas absolutas _ax, _ay a cada nodo
+   astDrawNode(ctx) → dibuja nodos y lineas en el canvas 2D
+   ═══════════════════════════════════════════════════════════ */
 function astLayout(n){
   if(!n.children||n.children.length===0){
     n._w=measureText(n.label,nodeStyle(n).bold,AST_FONT_SIZE)+8;
@@ -1261,6 +1299,10 @@ function _drawASTAtZoom(ast,zoom){
 }
 
 /* ════════ ZOOM STATE ════════ */
+/* ── SISTEMA DE ZOOM
+   zC=editor, zT=tabla, zA=arbol, zC2=editor sintactico
+   zI(t)=zoom in | zO(t)=zoom out | zR(t)=reset
+   applyZ(t) aplica el valor actual al elemento correspondiente ── */
 let zC=1,zT=1,zA=1,zC2=1;
 const ZS=.1,ZMN=.5,ZMX=3;
 function zI(t){if(t==='c')zC=Math.min(ZMX,zC+ZS);else if(t==='t')zT=Math.min(ZMX,zT+ZS);else if(t==='a')zA=Math.min(ZMX,zA+ZS);else if(t==='c2')zC2=Math.min(ZMX,zC2+ZS);applyZ(t);}
@@ -1274,9 +1316,17 @@ function applyZ(t){
 }
 
 /* ════════ STATE ════════ */
+/* ── ESTADO GLOBAL DE LA APLICACION
+   allToks   : lista de tokens del ultimo lex()
+   curFilter : tipo de token activo en el filtro de la tabla
+   astData   : arbol AST del ultimo parse()
+   curPhase  : vista activa ('lexico', 'sintactico', etc.) ── */
 let allToks=[],curFilter='',astData=null,curPhase='lexico';
 
 /* ════════ PHASE SWITCH ════════ */
+/* ── setPhase(p): cambia la vista activa (lexico/sintactico/etc.)
+   Oculta todas las vistas, muestra la seleccionada y actualiza
+   los botones de la topbar con la clase CSS correspondiente. ── */
 function setPhase(p){
   curPhase=p;
   ['lexico','sintactico','semantico','intermedio','optimizacion'].forEach(ph=>{
@@ -1294,6 +1344,13 @@ function setPhase(p){
 }
 
 /* ════════ COMPILE ════════ */
+/* ═══════════════════════════════════════════════════════════
+   compile(): funcion principal que ejecuta el compilador
+   1. Lee el codigo del editor
+   2. Llama al lexer  → genera allToks
+   3. Llama al parser → genera el AST y el log
+   4. Actualiza todos los paneles: tabla, stats, grafica, arbol, log
+   ═══════════════════════════════════════════════════════════ */
 function compile(){
   const src=document.getElementById('codeInput').value||document.getElementById('codeInput2').value;
   if(!src.trim()){setStatus('idle','Nada que compilar');return;}
@@ -1362,6 +1419,10 @@ function detectLang(src){
 }
 
 /* ════════ TOKEN TABLE ════════ */
+/* ── renderTokTable(): dibuja la tabla de tokens
+   Aplica el filtro curFilter si esta activo.
+   Cada fila muestra: #, valor, tipo (badge), clasificacion,
+   sub-clasificacion, linea y columna del token. ── */
 function renderTokTable(){
   const body=document.getElementById('tokBody');
   const tbl=document.getElementById('tokTable');
@@ -1459,6 +1520,10 @@ function initPieCanvas(){
   ctx.scale(dpr,dpr);
 }
 
+/* ── drawPie(): dibuja la grafica de torta (donut chart)
+   Muestra la distribucion porcentual de los tipos de tokens.
+   Usa canvas 2D con devicePixelRatio para alta resolucion.
+   pieSegments guarda los segmentos para el hover/tooltip. ── */
 function drawPie(){
   const cv=document.getElementById('pieChart');
   const dpr=window.devicePixelRatio||1;
@@ -1549,6 +1614,9 @@ function renderLog(log){
 }
 
 /* ════════ LINE NUMS ════════ */
+/* ── updateLineNums() / updateLineNums2()
+   Regenera los numeros de linea del editor (1, 2, 3...)
+   sincronizando la cantidad de saltos de linea del textarea. ── */
 function updateLineNums(){
   const src=document.getElementById('codeInput').value;
   const n=src.split('\n').length;
@@ -1573,6 +1641,8 @@ function updateLineNums2(){
 }
 
 /* ════════ STATUS ════════ */
+/* ── setStatus(s, msg): actualiza la barra de estado inferior
+   s puede ser: 'ok' (verde), 'err' (rojo), 'run' (amarillo), 'idle' (gris) ── */
 function setStatus(s,msg){
   const c={ok:'#57FF00',err:'#FF0040',run:'#F5CB5C',idle:'rgba(145,192,253,.4)'};
   document.getElementById('stDot').style.background=c[s]||c.idle;
@@ -1588,6 +1658,9 @@ function toggleInfoTable(){
 }
 
 /* ════════ CLEAR ════════ */
+/* ── clearAll(): limpia el editor y reinicia toda la interfaz
+   Borra el codigo, los tokens, el arbol AST, el log y
+   los contadores de la barra lateral. ── */
 function clearAll(){
   document.getElementById('codeInput').value='';
   document.getElementById('codeInput2').value='';
@@ -1607,6 +1680,9 @@ function clearAll(){
 }
 
 /* ════════ FILE LOADERS ════════ */
+/* ── loadFile(input): carga un archivo de texto al editor
+   Lee el archivo con FileReader y lo pone en ambos textareas,
+   luego compila automaticamente. ── */
 function loadFile(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
@@ -1617,6 +1693,9 @@ function loadFile(input){
   };
   r.readAsText(f);input.value='';
 }
+/* ── loadLogo(input): carga una imagen como logo del compilador
+   Lee el archivo con FileReader y lo muestra en el slot del logo
+   en la topbar. ── */
 function loadLogo(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
@@ -1628,6 +1707,9 @@ function loadLogo(input){
 }
 
 /* ════════ CURSOR ════════ */
+/* ── updateCursor(): muestra la posicion del cursor en el editor
+   Calcula linea y columna segun selectionStart del textarea
+   y actualiza el indicador 'L{n}:C{n}' del footer. ── */
 document.getElementById('codeInput').addEventListener('keyup',updateCursor);
 document.getElementById('codeInput').addEventListener('click',updateCursor);
 function updateCursor(){
@@ -1637,6 +1719,13 @@ function updateCursor(){
 }
 
 /* ════════ EVENTS ════════ */
+/* ── EVENTOS DE LA INTERFAZ
+   input  en codeInput  → actualiza lineas + highlight + compila
+   scroll en codeInput  → sincroniza numeros de linea y highlight
+   input  en codeInput2 → sincroniza con codeInput + compila
+   scroll en codeInput2 → sincroniza highlight del sintactico
+   Ctrl+Enter           → compile()
+   Ctrl+Scroll en tabla/arbol → zoom ── */
 document.getElementById('codeInput').addEventListener('input',()=>{updateLineNums();updateHighlight();if(document.getElementById('codeInput').value.length<3000)compile();});
 document.getElementById('codeInput').addEventListener('scroll',()=>{syncLineNumsScroll();syncHighlightScroll();});
 document.getElementById('codeInput2').addEventListener('input',()=>{
@@ -1723,6 +1812,17 @@ function lexHighlight(src){
   }
   return out;
 }
+/* ═══════════════════════════════════════════════════════════
+   BUFFER DE RESALTADO DE SINTAXIS (Syntax Highlighting)
+   Tecnica overlay: <pre> coloreado detras del <textarea> transparente.
+
+   lexHighlight(src) → igual que lex() pero devuelve HTML con <span>
+     cada token envuelto en <span style='color:...'>
+
+   updateHighlight()  → regenera el HTML del <pre> con el codigo actual
+   syncHighlightScroll() → sincroniza el desplazamiento del <pre>
+     con el scroll del textarea via CSS transform
+   ═══════════════════════════════════════════════════════════ */
 function updateHighlight(){
   const el=document.getElementById('codeHighlightCode');
   if(!el)return;
@@ -1745,6 +1845,9 @@ function syncHighlightScroll2(){
 }
 
 /* INIT */
+/* ── INICIALIZACION — se ejecuta al cargar la pagina
+   Inicia el canvas del pie chart, carga el logo si existe,
+   actualiza los numeros de linea y activa el highlight inicial. ── */
 initPieCanvas();
 tryLoadLogoPath();
 updateLineNums();drawPie();setStatus('idle','Listo — Ctrl+Enter para compilar');

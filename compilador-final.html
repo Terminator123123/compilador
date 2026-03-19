@@ -187,17 +187,40 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
   min-width:38px;max-width:38px;text-align:right;flex-shrink:0;
   overflow:hidden;white-space:pre;pointer-events:none;
 }
-#codeInput{
-  flex:1;padding:10px 12px;font-family:var(--font);font-size:13px;
-  line-height:1.7;color:var(--code-color);background:#000;
-  border:none;outline:none;resize:none;
-  overflow:auto;overflow-x:auto;overflow-y:auto;
-  caret-color:var(--lexico-color);width:100%;
-  white-space:pre;
+.code-editor-wrap{position:relative;flex:1;overflow:hidden;}
+#codeHighlight,#codeHighlight2{
+  position:absolute;top:0;left:0;
+  padding:10px 12px;margin:0;
+  font-family:var(--font);font-size:13px;line-height:1.7;
+  background:#000;color:#d4d4d4;
+  white-space:pre;overflow:visible;
+  pointer-events:none;z-index:0;
+  tab-size:4;-moz-tab-size:4;min-width:100%;
 }
-#codeInput::selection{background:rgba(253,145,199,.2);}
+#codeInput{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  padding:10px 12px;font-family:var(--font);font-size:13px;
+  line-height:1.7;color:transparent;background:transparent;
+  border:none;outline:none;resize:none;
+  overflow:auto;caret-color:var(--lexico-color);
+  white-space:pre;z-index:1;
+  tab-size:4;-moz-tab-size:4;width:100%;height:100%;
+}
+#codeInput::selection{background:rgba(253,145,199,.28);}
 #codeInput::-webkit-scrollbar{width:4px;height:4px;}
 #codeInput::-webkit-scrollbar-thumb{background:var(--border-main);border-radius:2px;}
+#codeInput2{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  padding:10px 12px;font-family:var(--font);font-size:13px;
+  line-height:1.7;color:transparent;background:transparent;
+  border:none;outline:none;resize:none;
+  overflow:auto;caret-color:var(--sintactico-color);
+  white-space:pre;z-index:1;
+  tab-size:4;-moz-tab-size:4;width:100%;height:100%;
+}
+#codeInput2::selection{background:rgba(87,255,0,.2);}
+#codeInput2::-webkit-scrollbar{width:4px;height:4px;}
+#codeInput2::-webkit-scrollbar-thumb{background:var(--sintactico-color);border-radius:2px;}
 .editor-footer{
   display:flex;align-items:center;justify-content:flex-end;gap:8px;
   padding:4px 10px;border-top:1px solid var(--border-main);background:#000;flex-shrink:0;
@@ -409,7 +432,10 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
       </div>
       <div class="code-body">
         <div class="line-nums" id="lineNums">1</div>
-        <textarea id="codeInput" spellcheck="false" placeholder="## Escribe el codigo..."></textarea>
+        <div class="code-editor-wrap">
+          <pre id="codeHighlight" aria-hidden="true"><code id="codeHighlightCode"></code></pre>
+          <textarea id="codeInput" spellcheck="false" placeholder="## Escribe el codigo..."></textarea>
+        </div>
       </div>
       <div class="editor-footer">
         <span id="cursorInfo" style="font-family:var(--font);font-size:10px;color:var(--text-sub);">L1:C1</span>
@@ -497,7 +523,10 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
       </div>
       <div class="code-body">
         <div class="line-nums" id="lineNums2"></div>
-        <textarea id="codeInput2" spellcheck="false" placeholder="## Escribe el codigo..." style="flex:1;padding:10px 12px;font-family:var(--font);font-size:13px;line-height:1.7;color:var(--code-color);background:#000;border:none;outline:none;resize:none;white-space:pre;overflow:auto;caret-color:var(--sintactico-color);width:100%;"></textarea>
+        <div class="code-editor-wrap">
+          <pre id="codeHighlight2" aria-hidden="true"><code id="codeHighlightCode2"></code></pre>
+          <textarea id="codeInput2" spellcheck="false" placeholder="## Escribe el codigo..."></textarea>
+        </div>
       </div>
       <div class="editor-footer">
         <div class="zoom-controls">
@@ -1229,10 +1258,10 @@ function zI(t){if(t==='c')zC=Math.min(ZMX,zC+ZS);else if(t==='t')zT=Math.min(ZMX
 function zO(t){if(t==='c')zC=Math.max(ZMN,zC-ZS);else if(t==='t')zT=Math.max(ZMN,zT-ZS);else if(t==='a')zA=Math.max(ZMN,zA-ZS);else if(t==='c2')zC2=Math.max(ZMN,zC2-ZS);applyZ(t);}
 function zR(t){if(t==='c')zC=1;else if(t==='t')zT=1;else if(t==='a')zA=1;else if(t==='c2')zC2=1;applyZ(t);}
 function applyZ(t){
-  if(t==='c'){const fs=Math.round(13*zC);const lh=(1.7).toFixed(2);document.getElementById('codeInput').style.fontSize=fs+'px';document.getElementById('codeInput').style.lineHeight=lh;document.getElementById('lineNums').style.fontSize=fs+'px';document.getElementById('lineNums').style.lineHeight=lh;document.getElementById('zoomCodeVal').textContent=Math.round(zC*100)+'%';syncLineNumsScroll();}
+  if(t==='c'){const fs=Math.round(13*zC);const lh=(1.7).toFixed(2);document.getElementById('codeInput').style.fontSize=fs+'px';document.getElementById('codeInput').style.lineHeight=lh;document.getElementById('lineNums').style.fontSize=fs+'px';document.getElementById('lineNums').style.lineHeight=lh;document.getElementById('zoomCodeVal').textContent=Math.round(zC*100)+'%';const hlz=document.getElementById('codeHighlight');if(hlz){hlz.style.fontSize=fs+'px';hlz.style.lineHeight=lh;}syncLineNumsScroll();syncHighlightScroll();}
   else if(t==='t'){const tbl=document.getElementById('tokTable');if(tbl)tbl.style.fontSize=Math.round(11*zT)+'px';document.getElementById('zoomTokVal').textContent=Math.round(zT*100)+'%';}
   else if(t==='a'){if(_lastAst)_drawASTAtZoom(_lastAst,zA);document.getElementById('zoomAstVal').textContent=Math.round(zA*100)+'%';}
-  else if(t==='c2'){const el=document.getElementById('codeInput2');el.style.fontSize=Math.round(13*zC2)+'px';document.getElementById('zoomCode2Val').textContent=Math.round(zC2*100)+'%';}
+  else if(t==='c2'){const el=document.getElementById('codeInput2');const fs2=Math.round(13*zC2);const lh2=(1.7).toFixed(2);el.style.fontSize=fs2+'px';el.style.lineHeight=lh2;const hl2z=document.getElementById('codeHighlight2');if(hl2z){hl2z.style.fontSize=fs2+'px';hl2z.style.lineHeight=lh2;}document.getElementById('zoomCode2Val').textContent=Math.round(zC2*100)+'%';syncHighlightScroll2();}
 }
 
 /* ════════ STATE ════════ */
@@ -1555,7 +1584,7 @@ function clearAll(){
   document.getElementById('codeInput2').value='';
   allToks=[];curFilter='';astData=null;
   renderTokTable();renderStats();drawPie();renderLog([]);renderAST(null);
-  updateLineNums();
+  updateLineNums();updateHighlight();updateHighlight2();
   document.getElementById('ei-err').textContent='0';
   document.getElementById('stErrItem').style.display='none';
   document.getElementById('syn-nodes').textContent='0';
@@ -1575,7 +1604,7 @@ function loadFile(input){
   r.onload=e=>{
     document.getElementById('codeInput').value=e.target.result;
     if(document.getElementById('codeInput2'))document.getElementById('codeInput2').value=e.target.result;
-    updateLineNums();compile();
+    updateLineNums();updateHighlight();updateHighlight2();compile();
   };
   r.readAsText(f);input.value='';
 }
@@ -1599,12 +1628,18 @@ function updateCursor(){
 }
 
 /* ════════ EVENTS ════════ */
-document.getElementById('codeInput').addEventListener('input',()=>{updateLineNums();if(document.getElementById('codeInput').value.length<3000)compile();});
-document.getElementById('codeInput').addEventListener('scroll', syncLineNumsScroll);
+document.getElementById('codeInput').addEventListener('input',()=>{updateLineNums();updateHighlight();if(document.getElementById('codeInput').value.length<3000)compile();});
+document.getElementById('codeInput').addEventListener('scroll',()=>{syncLineNumsScroll();syncHighlightScroll();});
 document.getElementById('codeInput2').addEventListener('input',()=>{
   document.getElementById('codeInput').value=document.getElementById('codeInput2').value;
-  updateLineNums();updateLineNums2();
+  updateLineNums();updateLineNums2();updateHighlight();updateHighlight2();
   if(document.getElementById('codeInput2').value.length<3000)compile();
+});
+document.getElementById('codeInput2').addEventListener('scroll',()=>{
+  const ta=document.getElementById('codeInput2');
+  const ln2=document.getElementById('lineNums2');
+  if(ln2)ln2.scrollTop=ta.scrollTop;
+  syncHighlightScroll2();
 });
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();compile();}});
 document.getElementById('tokScroll').addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();e.deltaY<0?zI('t'):zO('t');}},{passive:false});
@@ -1634,6 +1669,72 @@ function tryLoadLogoPath(){
   img.src=LOGO_PATH;
 }
 
+/* ═══════════════ SYNTAX HIGHLIGHT BUFFER ═══════════════
+   Técnica overlay: <pre> pintado detrás del <textarea> transparente.
+   Colores VS Code Dark+:
+     keyword:#569cd6  identifier:#9cdcfe  string:#ce9178
+     number:#b5cea8   comment:#6a9955     operator:#d4d4d4
+     symbol:#abb2bf   unknown:#f44747                      */
+const HL={
+  keyword:'#569cd6',identifier:'#9cdcfe',string:'#ce9178',
+  number:'#b5cea8', comment:'#6a9955',  operator:'#d4d4d4',
+  symbol:'#abb2bf', unknown:'#f44747'
+};
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function lexHighlight(src){
+  let out='',i=0;
+  const sp=(t,v)=>`<span style="color:${HL[t]}">${escH(v)}</span>`;
+  while(i<src.length){
+    const c=src[i];
+    if(c==='\n'||c===' '||c==='\t'||c==='\r'){out+=escH(c);i++;continue;}
+    // Bloque comentario /* ... */
+    if(c==='/'&&src[i+1]==='*'){let v='/*';i+=2;while(i<src.length-1&&!(src[i]==='*'&&src[i+1]==='/')){v+=src[i++];}v+='*/';i+=2;out+=sp('comment',v);continue;}
+    // Comentario de línea //
+    if(c==='/'&&src[i+1]==='/'){let v='';while(i<src.length&&src[i]!=='\n'){v+=src[i++];}out+=sp('comment',v);continue;}
+    // Comentario Python #
+    if(c==='#'){let v='';while(i<src.length&&src[i]!=='\n'){v+=src[i++];}out+=sp('comment',v);continue;}
+    // Triple-quote strings
+    if((c==='"'||c==="'")&&src[i+1]===c&&src[i+2]===c){const q=c+c+c;let v=q;i+=3;while(i<src.length&&!(src[i]===c&&src[i+1]===c&&src[i+2]===c)){v+=src[i++];}v+=q;i+=3;out+=sp('string',v);continue;}
+    // f-strings
+    if((c==='f'||c==='F')&&(src[i+1]==='"'||src[i+1]==="'")){const q=src[i+1];let v=c+q;i+=2;while(i<src.length&&src[i]!==q&&src[i]!=='\n'){if(src[i]==='\\'){v+=src[i++];}v+=src[i++];}if(src[i]===q){v+=q;i++;}out+=sp('string',v);continue;}
+    // Strings simples
+    if(c==='"'||c==="'"){const q=c;let v=c;i++;while(i<src.length&&src[i]!==q&&src[i]!=='\n'){if(src[i]==='\\'){v+=src[i++];}v+=src[i++];}if(src[i]===q){v+=q;i++;}out+=sp('string',v);continue;}
+    // Números
+    if(/[0-9]/.test(c)||(c==='.'&&/[0-9]/.test(src[i+1]||''))){let v='';while(i<src.length&&/[0-9a-fA-FxXbBoO._eE]/.test(src[i])){v+=src[i++];}out+=sp('number',v);continue;}
+    // Identificadores y palabras clave
+    if(/[a-zA-Z_$]/.test(c)){let v='';while(i<src.length&&/[a-zA-Z0-9_$]/.test(src[i])){v+=src[i++];}out+=sp(KW.has(v)?'keyword':'identifier',v);continue;}
+    // Operadores (3, 2 y 1 char)
+    const p3=src.slice(i,i+3),p2=src.slice(i,i+2);
+    if(['===','!==','**=','//='].includes(p3)){out+=sp('operator',p3);i+=3;continue;}
+    if(['==','!=','<=','>=','&&','||','++','--','+=','-=','*=','/=','%=','**','//','->','::','<<','>>','&=','|=','^=','?.','??','=>'].includes(p2)){out+=sp('operator',p2);i+=2;continue;}
+    if('+-*/%=<>!&|^~@'.includes(c)){out+=sp('operator',c);i++;continue;}
+    // Símbolos
+    if('(){}[];:,.\\'+'?'.includes(c)){out+=sp('symbol',c);i++;continue;}
+    out+=sp('unknown',c);i++;
+  }
+  return out;
+}
+function updateHighlight(){
+  const el=document.getElementById('codeHighlightCode');
+  if(!el)return;
+  el.innerHTML=lexHighlight(document.getElementById('codeInput').value)+'\n';
+}
+function syncHighlightScroll(){
+  const ta=document.getElementById('codeInput');
+  const hl=document.getElementById('codeHighlight');
+  if(hl)hl.style.transform='translate(-'+ta.scrollLeft+'px,-'+ta.scrollTop+'px)';
+}
+function updateHighlight2(){
+  const el=document.getElementById('codeHighlightCode2');
+  if(!el)return;
+  el.innerHTML=lexHighlight(document.getElementById('codeInput2').value)+'\n';
+}
+function syncHighlightScroll2(){
+  const ta=document.getElementById('codeInput2');
+  const hl=document.getElementById('codeHighlight2');
+  if(hl)hl.style.transform='translate(-'+ta.scrollLeft+'px,-'+ta.scrollTop+'px)';
+}
+
 /* INIT */
 initPieCanvas();
 tryLoadLogoPath();
@@ -1641,6 +1742,7 @@ updateLineNums();drawPie();setStatus('idle','Listo — Ctrl+Enter para compilar'
 // Pre-load example
 document.getElementById('codeInput').value=`## Escribe el codigo...`;
 updateLineNums();
+updateHighlight();
 </script>
 </body>
 </html>

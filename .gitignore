@@ -3,6 +3,9 @@ build/
 dist/
 *.spec.bak
 
+# Logo duplicado (reemplazado por assets/Logo_compilador.jpeg)
+Logo_compilador.jpg.jpeg
+
 # Archivos de audio / multimedia personales
 *.ogg
 *.mp3

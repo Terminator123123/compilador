@@ -131,7 +131,9 @@ python -m PyInstaller app.spec --noconfirm
 
 "Implementamos un parser de **descenso recursivo**, que es uno de los métodos más usados en compiladores reales. El parser construye un árbol sintáctico — cada nodo representa una estructura del programa: una función, un bloque `if`, un `while`, una declaración de variable."
 
-"El resultado se muestra como un árbol interactivo que se puede expandir y contraer. Al lado aparece un log que dice qué reglas gramaticales se aplicaron en cada paso, y si hay errores sintácticos los marca con exactamente en qué línea están."
+"El resultado se muestra como un árbol interactivo que se puede expandir y contraer. Al lado aparece un log con tres columnas: el mensaje de lo que se detectó, la línea del código donde ocurrió, y la **regla gramatical** que se aplicó."
+
+"Esa columna de regla es la que puede parecer extraña al principio — muestra cosas como `Programa → Decl*` o `FuncDef → tipo ID '(' Params ')' Bloque`. Eso es notación formal de gramática: el símbolo `→` significa 'se compone de'. Es la manera técnica de decir, por ejemplo, que una función está formada por un tipo de retorno, un nombre, paréntesis con parámetros y un bloque de código. Cada vez que el parser reconoce una estructura — un if, un while, una función — registra exactamente qué regla usó para reconocerla. Eso es lo que vemos ahí."
 
 "Reconoce estructuras de Python y de C/Java al mismo tiempo: funciones con `def` y con tipo de retorno, bloques con indentación y con llaves, bucles `for` y `while`, condicionales `if/else`."
 

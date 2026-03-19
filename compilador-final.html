@@ -190,17 +190,24 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
 .code-editor-wrap{position:relative;flex:1;overflow:hidden;}
 #codeHighlight,#codeHighlight2{
   position:absolute;top:0;left:0;
-  padding:10px 12px;margin:0;
+  padding:10px 12px;margin:0;border:0;
   font-family:var(--font);font-size:13px;line-height:1.7;
   background:#000;color:#d4d4d4;
   white-space:pre;overflow:visible;
   pointer-events:none;z-index:0;
   tab-size:4;-moz-tab-size:4;min-width:100%;
 }
+/* El <code> dentro del <pre> debe ser block para no desplazar el texto */
+#codeHighlightCode,#codeHighlight2 code{
+  display:block;padding:0;margin:0;border:0;
+  font:inherit;line-height:inherit;tab-size:inherit;
+}
 #codeInput{
   position:absolute;top:0;left:0;right:0;bottom:0;
   padding:10px 12px;font-family:var(--font);font-size:13px;
-  line-height:1.7;color:transparent;background:transparent;
+  line-height:1.7;
+  color:transparent;-webkit-text-fill-color:transparent;
+  background:transparent;
   border:none;outline:none;resize:none;
   overflow:auto;caret-color:var(--lexico-color);
   white-space:pre;z-index:1;
@@ -212,7 +219,9 @@ body{font-family:var(--font);color:var(--text-white);display:flex;flex-direction
 #codeInput2{
   position:absolute;top:0;left:0;right:0;bottom:0;
   padding:10px 12px;font-family:var(--font);font-size:13px;
-  line-height:1.7;color:transparent;background:transparent;
+  line-height:1.7;
+  color:transparent;-webkit-text-fill-color:transparent;
+  background:transparent;
   border:none;outline:none;resize:none;
   overflow:auto;caret-color:var(--sintactico-color);
   white-space:pre;z-index:1;

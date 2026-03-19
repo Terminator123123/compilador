@@ -5,7 +5,7 @@ a = Analysis(
     ['app.py'],
     pathex=[],
     binaries=[],
-    datas=[('compilador-final.html', '.'), ('prism.css', '.'), ('prism.js', '.'), ('Logo_compilador.jpg.jpeg', '.')],
+    datas=[('compilador-final.html', '.'), ('prism.css', '.'), ('prism.js', '.'), ('assets/Logo_compilador.jpeg', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -1,5 +1,7 @@
-# Archivos temporales de PyInstaller (build)
+# Archivos generados por PyInstaller
 build/
+dist/
+*.spec.bak
 
 # Archivos de audio / multimedia personales
 *.ogg

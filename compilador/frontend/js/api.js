@@ -72,6 +72,14 @@ async function compile() {
   if (window._compileAbort) window._compileAbort.abort();
   window._compileAbort = new AbortController();
 
+  /* Detener animación de trazado si está activa */
+  if (_traceTimer) {
+    clearInterval(_traceTimer);
+    _traceTimer = null;
+    const pb = document.getElementById('trace-play-btn');
+    if (pb) { pb.textContent = '▶ Reproducir'; pb.classList.remove('playing'); }
+  }
+
   /* Limpiar resultados anteriores inmediatamente */
   _clearResults();
 

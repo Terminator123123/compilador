@@ -66,9 +66,10 @@ _BUILTINS = frozenset({
 
 class _Scope:
     def __init__(self, name: str, parent: Optional[_Scope] = None):
-        self.name    = name
-        self.parent  = parent
-        self.symbols: dict[str, dict] = {}
+        self.name     = name
+        self.parent   = parent
+        self.children: list[_Scope] = []
+        self.symbols:  dict[str, dict] = {}
 
     def declare(self, name: str, entry: dict) -> bool:
         if name in self.symbols:
@@ -109,7 +110,9 @@ def analyze(ast: dict) -> dict:
 
     def push_scope(name: str):
         nonlocal current_scope
-        current_scope = _Scope(name, current_scope)
+        new_scope = _Scope(name, current_scope)
+        current_scope.children.append(new_scope)
+        current_scope = new_scope
 
     def pop_scope():
         nonlocal current_scope
@@ -731,6 +734,8 @@ def analyze(ast: dict) -> dict:
                 'is_const':      sym.get('is_const', False),
                 'depth':         depth,
             })
+        for child in scope.children:
+            collect(child, depth + 1)
 
     collect(global_scope)
 

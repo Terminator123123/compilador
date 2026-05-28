@@ -10,14 +10,16 @@ from backend.codegen import generate_intermediate
 from backend.optimizer import optimize as optimize_tac
 from backend.object_code import generate_object_code
 
-app = Flask(__name__, static_folder='../frontend', static_url_path='')
+_FRONTEND = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+
+app = Flask(__name__, static_folder=_FRONTEND, static_url_path='')
 
 
 # ── Static frontend ───────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
-    return send_from_directory('../frontend', 'index.html')
+    return send_from_directory(_FRONTEND, 'index.html')
 
 
 # ── Compilar API ──────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import threading
+import sys
 from flask import Flask, request, jsonify, send_from_directory
 import os
 
@@ -10,7 +11,10 @@ from backend.codegen import generate_intermediate
 from backend.optimizer import optimize as optimize_tac
 from backend.object_code import generate_object_code
 
-_FRONTEND = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+if getattr(sys, 'frozen', False):
+    _FRONTEND = os.path.join(sys._MEIPASS, 'frontend')
+else:
+    _FRONTEND = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
 
 app = Flask(__name__, static_folder=_FRONTEND, static_url_path='')
 

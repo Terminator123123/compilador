@@ -47,20 +47,24 @@ _KEYWORDS = frozenset({
     'IF', 'IF_FALSE', 'GOTO', 'RETURN', 'CALL', 'ARG', 'PARAM',
     'FUNC_BEGIN', 'FUNC_END', 'HALT', 'True', 'False',
     'not', 'and', 'or', 'LEN',
+    'print', 'input', 'range', 'len', 'str', 'int', 'float', 'bool',
+    'list', 'dict', 'set', 'tuple', 'abs', 'sum', 'min', 'max',
 })
+
+_STR_OR_NONWS = r'(?:"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'|\S+)'
 
 _BIN_RE   = re.compile(
     r'^(\w[\w.]*)\s*=\s*(\S+)\s*(\+|-|\*\*|//|\*|/|%|==|!=|<=|>=|<|>|&&|\|\||and\b|or\b)\s*(\S+)$')
 _UN_RE    = re.compile(r'^(\w[\w.]*)\s*=\s*(-|not|!)\s*(\S+)$')
-_COPY_RE  = re.compile(r'^(\w[\w.]*)\s*=\s*(\S+)$')
+_COPY_RE  = re.compile(r'^(\w[\w.]*)\s*=\s*(' + _STR_OR_NONWS + r')$')
 _IF_RE    = re.compile(r'^IF\s+(\S+)\s+GOTO\s+(\S+)$')
 _IFF_RE   = re.compile(r'^IF_FALSE\s+(\S+)\s+GOTO\s+(\S+)$')
 _GOTO_RE  = re.compile(r'^GOTO\s+(\S+)$')
 _RET_RE   = re.compile(r'^RETURN(?:\s+(\S+))?$')
 _CALL_RE  = re.compile(r'^(\w[\w.]*)\s*=\s*CALL\s+(\S+),\s*(\d+)$')
 _CALL2_RE = re.compile(r'^CALL\s+(\S+),\s*(\d+)$')
-_ARG_RE   = re.compile(r'^ARG\s+(\S+)$')
-_PARAM_RE = re.compile(r'^PARAM\s+(\S+)$')
+_ARG_RE   = re.compile(r'^ARG\s+(' + _STR_OR_NONWS + r')$')
+_PARAM_RE = re.compile(r'^PARAM\s+(' + _STR_OR_NONWS + r')$')
 _FUNCB_RE = re.compile(r'^FUNC_BEGIN\s+(\S+)$')
 _FUNCE_RE = re.compile(r'^FUNC_END\s+(\S+)$')
 
@@ -70,6 +74,12 @@ def _is_num(s: str) -> bool:
         float(s); return True
     except (ValueError, TypeError):
         return False
+
+
+def _is_str_lit(s: str) -> bool:
+    return (len(s) >= 2 and
+            ((s[0] == '"' and s[-1] == '"') or
+             (s[0] == "'" and s[-1] == "'")))
 
 
 def _is_temp(s: str) -> bool:
@@ -147,10 +157,12 @@ def generate_object_code(optimized_tac: list) -> dict:
             label_names.add(ins['instr'].rstrip(':'))
             continue
 
+    _STR_STRIP_RE = re.compile(r'"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'')
     for ins in optimized_tac:
         if ins.get('is_label'):
             continue
-        for tok in re.findall(r'\b([a-zA-Z_]\w*)\b', ins['instr']):
+        clean = _STR_STRIP_RE.sub('', ins['instr'])
+        for tok in re.findall(r'\b([a-zA-Z_]\w*)\b', clean):
             if tok not in _KEYWORDS and not _is_temp(tok) and tok not in label_names:
                 user_vars.add(tok)
 
@@ -178,6 +190,8 @@ def generate_object_code(optimized_tac: list) -> dict:
     def load_op(operand: str, target: str = 'R0'):
         if _is_num(operand):
             emit(f'MOVI  {target}, #{operand}', f'inmediato {operand}')
+        elif _is_str_lit(operand):
+            emit(f'MOVS  {target}, {operand}', f'cadena {operand}')
         elif _is_temp(operand):
             r = alloc.get(operand)
             if r and r != target:
@@ -297,8 +311,14 @@ def generate_object_code(optimized_tac: list) -> dict:
             dst, src1, op, src2 = m.groups()
             instr_name = _OP_INSTR.get(op, 'OP')
             is_cmp = instr_name.startswith('CMP_')
-            load_op(src1, 'R1')
-            load_op(src2, 'R2')
+            # Si src2 es un temp mapeado a R1, moverlo antes de que
+            # load_op(src1, R1) lo sobreescriba
+            if _is_temp(src2) and alloc.get(src2) == 'R1':
+                emit(f'MOVE  R2, R1', f'preservar {src2} antes de cargar {src1}')
+                load_op(src1, 'R1')
+            else:
+                load_op(src1, 'R1')
+                load_op(src2, 'R2')
             if is_cmp:
                 emit('CMP   R1, R2', f'{src1} {op} {src2}')
                 emit('SETF  R0', 'resultado de comparación → R0')

@@ -1,0 +1,11 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# PyInstaller build artifacts
+compilador/build/
+compilador/dist/
+
+# Memoria interna del asistente
+.claude/

@@ -776,6 +776,26 @@ def parse(tokens: list) -> dict:
             lg_reduce(rule_bnf('Import', 1), t['ln'])
             return node(f'from {mod} import {sym}', [])
 
+        # Declaración estilo C con tipo desconocido: "nt a = 5", "myType x = ..."
+        # Dos identificadores consecutivos sin operador = probable tipo inválido
+        if t['t'] == 'identifier' and peek(1)['t'] == 'identifier':
+            tp = adv()['v']
+            nm_tok = adv()
+            nm = nm_tok['v']
+            ch = []
+            if cur()['v'] == '=':
+                adv()
+                e = parse_expr_sy()
+                if e:
+                    ch.append(e)
+            if cur()['v'] == ';':
+                adv()
+            log.append({'ok': False,
+                        'msg': f"Error sintáctico: tipo desconocido '{tp}' en '{tp} {nm}'",
+                        'rule': '', 'ln': t['ln']})
+            ec += 1
+            return node(f'ERROR: {tp} {nm}', ch, 'c_decl_err', t['ln'])
+
         # Caso general: expresión
         e = parse_expr_sy()
         if cur()['v'] == ';':

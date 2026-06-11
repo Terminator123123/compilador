@@ -92,6 +92,12 @@ class _Scope:
             self.parent.mark_used(name)
 
 
+def _all_scopes(scope: _Scope):
+    yield scope
+    for child in scope.children:
+        yield from _all_scopes(child)
+
+
 def analyze(ast: dict) -> dict:
     errors:   list[dict] = []
     warnings: list[dict] = []
@@ -147,6 +153,8 @@ def analyze(ast: dict) -> dict:
                 rt = infer_type(children[1])
                 if label == '+' and (lt in _STRING or rt in _STRING):
                     return 'str'
+                if label == '*' and (lt in _STRING or rt in _STRING):
+                    return 'str'
                 if lt in _NUMERIC and rt in _NUMERIC:
                     return 'float' if ('float' in (lt, rt) or 'double' in (lt, rt)) else 'int'
         return _ANY
@@ -174,6 +182,17 @@ def analyze(ast: dict) -> dict:
             if _has_any_return(n.get('children', [])):
                 return True
         return False
+
+    def _check_unreachable(nodes: list, fn: str = ''):
+        for i, n in enumerate(nodes):
+            if n.get('meta') == 'return' or n.get('label') == 'return':
+                if i + 1 < len(nodes):
+                    suffix = f" en '{fn}'" if fn else ''
+                    warn(
+                        f"Código inalcanzable después de 'return'{suffix}",
+                        'return', nodes[i + 1].get('ln', 0),
+                    )
+                break
 
     def _check_type_compat(decl_t: str, inferred: str, name: str):
         if decl_t == _ANY or inferred == _ANY:
@@ -249,6 +268,8 @@ def analyze(ast: dict) -> dict:
                     'is_const':      False,
                     'ln':            node_ln,
                 })
+            for child in children:
+                visit(child)
             return
 
         # ── Declaración con tipo: int x = ..., float y, var x, const x ───────
@@ -317,13 +338,32 @@ def analyze(ast: dict) -> dict:
                                 if existing.get('declared_type') != 'var' else _ANY,
                                 r_type, lname,
                             )
+                        visit(right)
+                        for child in children[2:]:
+                            visit(child)
                     else:
+                        # Operador compuesto sobre variable no declarada es siempre un error
+                        if label != '=':
+                            err(
+                                f"'{label}' sobre '{lname}' que no fue declarada — "
+                                f"asígnale un valor primero: {lname} = <valor>",
+                                lname, left_ln,
+                            )
+                            visit(right)
+                            for child in children[2:]:
+                                visit(child)
+                            return  # no declarar — evita cascada de falsos positivos
                         # ③ Shadowing de built-ins al asignar sin declarar
                         if lname in _BUILTINS:
                             warn(
                                 f"'{lname}' sobreescribe un identificador built-in",
                                 lname, left_ln,
                             )
+                        # Visitar lado derecho ANTES de declarar la variable nueva
+                        # para detectar uso de la misma variable antes de ser asignada
+                        visit(right)
+                        for child in children[2:]:
+                            visit(child)
                         current_scope.declare(lname, {
                             'declared_type': 'var',
                             'inferred_type': r_type,
@@ -335,10 +375,6 @@ def analyze(ast: dict) -> dict:
                             'is_const':      False,
                             'ln':            left_ln,
                         })
-
-                visit(right)
-                for child in children[2:]:
-                    visit(child)
             else:
                 for child in children:
                     visit(child)
@@ -418,6 +454,7 @@ def analyze(ast: dict) -> dict:
                             'ln':            p_ln,
                         })
 
+            _check_unreachable(body, fn_name)
             for b in body:
                 visit(b)
 
@@ -694,6 +731,27 @@ def analyze(ast: dict) -> dict:
                 elif lt in _NUMERIC and rt in _STRING:
                     err(f"Operación '{label}' no es válida entre número y string", label, node_ln)
 
+            # Comparación con None: usar 'is'/'is not' en lugar de '=='/'!='
+            if label in ('==', '!='):
+                _l_none = left.get('meta') == 'lit' and left.get('label') in ('None', 'null')
+                _r_none = right.get('meta') == 'lit' and right.get('label') in ('None', 'null')
+                if _l_none or _r_none:
+                    _better = 'is not' if label == '!=' else 'is'
+                    warn(
+                        f"Usa '{_better} None' en lugar de '{label} None' — "
+                        f"en Python la comparación de identidad con None "
+                        f"debe hacerse con 'is'/'is not'",
+                        label, node_ln,
+                    )
+
+            # Igualdad exacta entre flotantes
+            if label == '==' and lt == 'float' and rt == 'float':
+                warn(
+                    f"Comparación '==' entre valores float puede fallar por errores "
+                    f"de precisión de punto flotante; considera usar abs(a - b) < epsilon",
+                    label, node_ln,
+                )
+
             visit(left)
             visit(right)
             return
@@ -714,6 +772,21 @@ def analyze(ast: dict) -> dict:
                 'name': sym_name,
                 'ln':   sym.get('ln', 0),
             })
+
+    # ── Variables declaradas pero nunca usadas ────────────────────────────────
+    for _sc in _all_scopes(global_scope):
+        for sym_name, sym in _sc.symbols.items():
+            if (not sym.get('is_func')
+                    and not sym.get('is_param')
+                    and sym.get('use_count', 0) == 0
+                    and sym.get('assigned', False)
+                    and sym_name not in _BUILTINS):
+                warnings.append({
+                    'ok':   True,
+                    'msg':  f"Variable '{sym_name}' declarada pero nunca usada",
+                    'name': sym_name,
+                    'ln':   sym.get('ln', 0),
+                })
 
     # ── Recolectar tabla de símbolos ─────────────────────────────────────────
 

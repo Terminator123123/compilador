@@ -2,10 +2,25 @@
 __pycache__/
 *.pyc
 *.pyo
+venv/
+env/
 
 # PyInstaller build artifacts
+build/
+dist/
+*.spec.bak
 compilador/build/
 compilador/dist/
+
+# Archivos de sistema Windows
+Thumbs.db
+desktop.ini
+
+# Multimedia / assets personales
+*.ogg
+*.mp3
+*.mp4
+Logo_compilador.jpg.jpeg
 
 # Memoria interna del asistente
 .claude/
